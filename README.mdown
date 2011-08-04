@@ -1,0 +1,4 @@
+[jQuery.scrollery](http://gryzzly.github.com/jquery-scrollery)
+
+Very simply jQuery plugin that allows to create a photo-film like
+gallery from a scrollable list of images.

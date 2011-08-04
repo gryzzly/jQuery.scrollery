@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html lang="ru-RU">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+    * {
+        margin:0;
+        padding:0;
+    }
+    body {
+      width:90%;
+      margin:30px auto;
+      font-family:helvetica, sans-serif;
+    }
+    .scrollery {
+      border:2px solid #444;
+      margin:30px auto;
+      padding:10px;
+      border-radius:10px;
+    }
+      .scrollery li {
+        padding:10px;
+      }
+    /* Gallery CSS */
+    </style>
+    <link href="jquery.scrollery.css" rel="stylesheet">
+</head>
+<body>
+    <h1>jQuery scrollery</h1>
+    <p>Simple and light-weight plugin that allows to create a gallery from a list of images, wrapped in a scrollable container.</p>
+    <p>Click on the container in order to continue to the next image. When the last image is reached, gallery scrolls to the first item.</p>
+    <ul class="scrollery">
+        <li>
+            <img src="http://lorempixum.com/400/200/abstract/1/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/abstract/2/">
+        </li> 
+        <li>
+            <img src="http://lorempixum.com/300/200/abstract/3/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/350/250/abstract/4/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/200/abstract/5/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/abstract/6/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/200/abstract/7/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/250/abstract/8/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/250/abstract/9/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/200/abstract/10/">
+        </li>
+      </ul>
+    <script src="jquery-1.6.1.js"></script>
+    <script src="jquery.scrollTo-1.4.2.js"></script>
+    <script src="jquery.scrollery-0.1.js"></script>
+    <script>
+    $(document).ready(function() {
+       $(window)
+        .resize(function() {
+          $('.scrollery').scrollery();
+        })
+        .resize();
+    });
+    
+    </script>
+</body>
+</html>
