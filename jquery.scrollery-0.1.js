@@ -54,6 +54,8 @@
 ;(function ($) {
     $.fn.scrollery = function ( opts ) {
 
+        var doc = $(document);
+
         opts = $.extend({
           delay : 500,
           hideScrollBar : true,
@@ -65,7 +67,8 @@
                 items = $(this).children(),
                 len = items.length,
                 images = container.find('img'),
-                imagesLoaded = 0;
+                imageDone,
+                imagesCounter = 0;
             
             // ---=== Images are loading ===---
             
@@ -85,73 +88,97 @@
 
             // we have to make sure that all images have loaded
             // so we have right x coordinates
-            images.bind('load', function () {
-              imagesLoaded += 1;
-              if ( imagesLoaded === len ) {
-                $(document).trigger('images-loaded.scrollery'); 
+            imageDone = function() {
+              imagesCounter += 1;
+              if ( imagesCounter === len ) {
+                doc.trigger('images-loaded.scrollery'); 
+              }
+            };
+            
+            images.each( function( index ) {
+              // image is already loaded
+              if ( this.complete ) {
+                // Webkit and Mozilla report true even for broken images
+                // although they shouldn't
+                // spec: http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content-1.html#dom-img-complete
+                imageDone();
+              } 
+              // image is loaded, but is broken
+              // these ones aren't yet loaded, so we can't attach event listeners to them
+              else {
+                this.onload = imageDone;
+                this.onerror = imageDone;
               }
             });
-
             // ---=== Images loaded ===---
             
-            $(document).bind('images-loaded.scrollery', function () {
-              var positions = [], 
-                  childrenWidth = 0,
-                  i = 0,
-                  scrollDelta = container[ 0 ].scrollWidth - container.width(),
-                  doScroll;
+            doc
+              .unbind('images-loaded.scrollery')
+              .bind('images-loaded.scrollery', function () {
+                var positions = [], 
+                    childrenWidth = 0,
+                    i = 0,
+                    scrollDelta = container[ 0 ].scrollWidth - container.width(),
+                    doScroll;
 
-              // take containers paddings in account
-              scrollDelta -= parseInt( container.css('padding-left') );
-              scrollDelta -= parseInt( container.css('padding-right') );
+                // take containers paddings in account
+                scrollDelta -= parseInt( container.css('padding-left') );
+                scrollDelta -= parseInt( container.css('padding-right') );
 
-              // save items' positions to compare scroll to them
-              for ( i = 0; i < len; i += 1 ) {
-                positions.push( items.eq( i ).position().left );
-                childrenWidth += $(this).width();
-              }
-              
-              // don't do anything when container is wider than its children
-              if ( container.width() >  childrenWidth ) return;
-              
-              doScroll = function () {
-                var currentScroll, i;
-                // prevent queing up
-                if ( container.is(':animated') ) return;
-                
-                currentScroll = container.scrollLeft();
-                i = 0;
-                
-                // find next items position
-                while ( i < len ) {
-                  i += 1;
-                  if ( currentScroll < positions[ i ] ) break;
+                // save items' positions to compare scroll to them
+                for ( i = 0; i < len; i += 1 ) {
+                  positions.push( items.eq( i ).position().left );
+                  childrenWidth += $(this).width();
                 }
-                // scroll to the next item, unless we can't scroll anymore
-                container.scrollTo(
-                  currentScroll < scrollDelta ? items.eq( i ) : 0 , 
-                  opts.delay
-                );
-              };
               
-              // Event handlers
-              container
-                .unbind( 'click.scrollery' )
-                .bind( 'click.scrollery', doScroll );
+                // don't do anything when container is wider than its children
+                if ( container.width() >  childrenWidth ) return;
+              
+                doScroll = function () {
+                  var currentScroll, i;
+                  // prevent queing up
+                  if ( container.is(':animated') ) return;
+                
+                  currentScroll = container.scrollLeft();
+                  i = 0;
+                
+                  // find next items position
+                  while ( i < len ) {
+                    i += 1;
+                    if ( currentScroll < positions[ i ] ) break;
+                  }
+                  // scroll to the next item, unless we can't scroll anymore
+                  container.scrollTo(
+                    currentScroll < scrollDelta ? items.eq( i ) : 0 , 
+                    opts.delay
+                  );
+                };
+              
+                // Event handlers
+                container
+                  .unbind( 'click.scrollery' )
+                  .bind( 'click.scrollery', doScroll );
 
-              if ( opts.keyboardControls ) {
-                $(document)
-                  .unbind( 'keydown.scrollery' )
-                  .bind( 'keydown.scrollery', function (e) {
-                    var code = e.keyCode || e.which;
-                    // 39 - right arrow
-                    if ( code === 39 ) {
-                      e.preventDefault();
+                if ( opts.keyboardControls ) {
+                  doc
+                    .unbind( 'keydown.scrollery' )
+                    .bind( 'keydown.scrollery', function (e) {
+                      var code = e.keyCode || e.which;
+                      // 39 - right arrow
+                      if ( code === 39 ) {
+                        e.preventDefault();
 
-                      doScroll();
-                    }
-                  });
-              }
+                        doScroll();
+                      }
+                    });
+                }
+                
+                // recalculate scrollDelta on window resize
+                $(window).resize(function() {
+                  scrollDelta = container[ 0 ].scrollWidth - container.width();
+                  scrollDelta -= parseInt( container.css('padding-left') );
+                  scrollDelta -= parseInt( container.css('padding-right') );
+                });
             });
         });
     };
