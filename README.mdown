@@ -2,3 +2,6 @@
 
 Very simple jQuery plugin that allows to create a photo-film like
 gallery from a scrollable list of images.
+
+version 0.1 – initial commit
+version 0.2 – scrollery is trying to be smart and find out if images are already loaded or not. if not, it waits till all the images have loaded. 

@@ -1,12 +1,16 @@
 .scrollery {
-    overflow-x:scroll;
-    white-space:nowrap;
-    font-size:0;
-    list-style:none;
+    overflow:hidden;
 }
-    .scrollery li {
-        display:inline-block;
-        *display:inline;
-        *zoom:1;
-        vertical-align:middle;
+    .scrollery ul {
+        overflow-x:scroll;
+        white-space:nowrap;
+        font-size:0;
+        list-style:none;
+        position:relative;
     }
+        .scrollery li {
+            display:inline-block;
+            *display:inline;
+            *zoom:1;
+            vertical-align:middle;
+        }

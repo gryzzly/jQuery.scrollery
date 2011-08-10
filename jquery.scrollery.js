@@ -4,7 +4,7 @@
  * @author Misha Reyzlin <http://mishareyzlin.com>
  * @license – WTFPL <http://sam.zoy.org/wtfpl/>
  *
- * @version 0.1
+ * @version 0.2
  *
  * @param {Object} settings hash – optional set of settings
  *   @option {Number} delay – in milliseconds, how long should scrolling animation take, default: 500
@@ -64,27 +64,21 @@
 
         return this.each( function () {
             var container = $(this),
-                items = $(this).children(),
+                list = $(this).children('ul'),
+                items = list.children(),
                 len = items.length,
-                images = container.find('img'),
+                images = list.find('img'),
                 imageDone,
                 imagesCounter = 0;
             
             // ---=== Images are loading ===---
-            
-            // establish new positioning context within container
-            if ( !/re|ab|f/.test( container.css('position') ) ) {
-              container.css('position', 'relative')
-            }
             
             // change container's overflow to hidden
             // it's a good idea to have overflow property 
             // of the container to be set initially to "auto" or "scroll",
             // so that if javascript is disabled, content is still accessible 
             // by simply scrolling it with mousewheel or arrow keys
-            if ( opts.hideScrollBar ) container.css( 'overflow-x', 'hidden' );
-
-            container.css( 'cursor', 'pointer' );
+            if ( opts.hideScrollBar ) list.css( 'overflow-x', 'hidden' );
 
             // we have to make sure that all images have loaded
             // so we have right x coordinates
@@ -102,7 +96,7 @@
                 // although they shouldn't
                 // spec: http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content-1.html#dom-img-complete
                 imageDone();
-              } 
+              }
               // image is loaded, but is broken
               // these ones aren't yet loaded, so we can't attach event listeners to them
               else {
@@ -118,17 +112,22 @@
                 var positions = [], 
                     childrenWidth = 0,
                     i = 0,
-                    scrollDelta = container[ 0 ].scrollWidth - container.width(),
+                    scrollDelta,
                     doScroll;
-
-                // take containers paddings in account
-                scrollDelta -= parseInt( container.css('padding-left') );
-                scrollDelta -= parseInt( container.css('padding-right') );
+                
+                list.css(
+                  'padding-right',
+                  list.outerWidth() - images.last().width() 
+                );
+                
+                scrollDelta = list[ 0 ].scrollWidth - list.outerWidth();
+                scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
+                scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
 
                 // save items' positions to compare scroll to them
                 for ( i = 0; i < len; i += 1 ) {
                   positions.push( items.eq( i ).position().left );
-                  childrenWidth += $(this).width();
+                  childrenWidth += items.eq( i ).width();
                 }
               
                 // don't do anything when container is wider than its children
@@ -137,18 +136,19 @@
                 doScroll = function () {
                   var currentScroll, i;
                   // prevent queing up
-                  if ( container.is(':animated') ) return;
-                
-                  currentScroll = container.scrollLeft();
+                  if ( list.is(':animated') ) return;
+
                   i = 0;
-                
+                  currentScroll = list.scrollLeft();
+
                   // find next items position
                   while ( i < len ) {
                     i += 1;
                     if ( currentScroll < positions[ i ] ) break;
                   }
+                  
                   // scroll to the next item, unless we can't scroll anymore
-                  container.scrollTo(
+                  list.scrollTo(
                     currentScroll < scrollDelta ? items.eq( i ) : 0 , 
                     opts.delay
                   );
@@ -175,9 +175,14 @@
                 
                 // recalculate scrollDelta on window resize
                 $(window).resize(function() {
-                  scrollDelta = container[ 0 ].scrollWidth - container.width();
-                  scrollDelta -= parseInt( container.css('padding-left') );
-                  scrollDelta -= parseInt( container.css('padding-right') );
+                  list.css('padding-right', 0);
+                  list.css(
+                    'padding-right',
+                    list.outerWidth() - images.last().width() 
+                  );
+                  scrollDelta = list[ 0 ].scrollWidth - list.outerWidth();
+                  scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
+                  scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
                 });
             });
         });
