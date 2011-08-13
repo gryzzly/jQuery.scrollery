@@ -4,7 +4,7 @@
  * @author Misha Reyzlin <http://mishareyzlin.com>
  * @license – WTFPL <http://sam.zoy.org/wtfpl/>
  *
- * @version 0.2
+ * @version 0.3
  *
  * @param {Object} settings hash – optional set of settings
  *   @option {Number} delay – in milliseconds, how long should scrolling animation take, default: 500
@@ -62,135 +62,153 @@
           keyboardControls : true
         }, opts );
 
-        return this.each( function () {
-            var container = $(this),
-                list = container.children('ul'),
-                items = list.children(),
-                len = items.length,
-                images = list.find('img'),
-                imageDone,
-                imagesCounter = 0, init;
-                
-            // ---=== Images are loading ===---
-            
-            // change container's overflow to hidden
-            // it's a good idea to have overflow property 
-            // of the container to be set initially to "auto" or "scroll",
-            // so that if javascript is disabled, content is still accessible 
-            // by simply scrolling it with mousewheel or arrow keys
-            if ( opts.hideScrollBar ) list.css( 'overflow-x', 'hidden' );
+        var Scrollery = function ( container ) {
+          this.container = container;
+          this.list = this.container.children('ul');
+          this.items = this.list.children();
+          this.len = this.items.length;
+          this.images = this.list.find('img');
+          this.imagesCounter = 0;
+          
+          // change container's overflow to hidden
+          // it's a good idea to have overflow property 
+          // of the container to be set initially to "auto" or "scroll",
+          // so that if javascript is disabled, content is still accessible 
+          // by simply scrolling it with mousewheel or arrow keys
+          if ( opts.hideScrollBar ) this.list.css( 'overflow-x', 'hidden' );
+          
+          // we have to make sure that all images have loaded
+          // so we have right x coordinates
+          // after all images will be loaded, .init() will be invoked
+          this.loadImages();
+        };
 
-            // we have to make sure that all images have loaded
-            // so we have right x coordinates
-            imageDone = function() {
-              imagesCounter += 1;
-              if ( imagesCounter === len ) {
-                init(); 
-              }
-            };
-            
-            images.each( function( index ) {
+        Scrollery.prototype = {
+          
+          imageDone : function () {
+            if ( this.imagesCounter === this.len ) {
+              this.init();
+            }
+          },
+          
+          loadImages : function () {
+            var self = this;
+
+            this.images.each( function () {
               // image is already loaded
               if ( this.complete ) {
                 // Webkit and Mozilla report true even for broken images
                 // although they shouldn't
                 // spec: http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content-1.html#dom-img-complete
-                imageDone();
+                self.imageDone();
               }
               // image is loaded, but is broken
               // these ones aren't yet loaded, so we can't attach event listeners to them
               else {
-                this.onload = imageDone;
-                this.onerror = imageDone;
+                this.onload = function () {
+                  self.imageDone();
+                };
+                this.onerror = function () {
+                  self.imageDone();
+                }
               }
             });
-            // ---=== Images loaded ===---
-            
-            init = function () {
-                var positions = [], 
-                    childrenWidth = 0,
-                    i = 0,
-                    scrollDelta,
-                    doScroll;
+          },
+          
+          doScroll : function () {
+            var currentScroll, i;
+            // prevent queing up
+            if ( this.list.is(':animated') ) return;
 
-                // increase scrollWidth by adding padding-right
-                // that is the width of the list minus one last image
-                list.css(
-                  'padding-right',
-                  list.outerWidth() - images.last().width() 
-                );
+            i = 0;
+            currentScroll = this.list.scrollLeft();
 
-                // save items' positions to compare scroll to them
-                for ( i = 0; i < len; i += 1 ) {
-                  positions.push( items.eq( i ).position().left );
-                  childrenWidth += items[ i ].clientWidth;
-                }
-                // there is an IE <= 9 bug, scrollWidth on an element that has
-                // whitespace:nowrap is reported without padding
-                // so let's construct scrollWidth by ourselves
-                scrollDelta = childrenWidth + list.css('padding-left') +
-                                              list.css('padding-right');
-                scrollDelta -= list.outerWidth();
-                // the user is expected to have the same padding on all the items
-                // TODO: document this
-                scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
-                scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
+            // find next items position
+            while ( i < this.len ) {
+              i += 1;
+              if ( currentScroll < this.positions[ i ] ) break;
+            }
 
-                // don't do anything when container is wider than its children
-                if ( list.outerWidth() > childrenWidth ) return;
-              
-                doScroll = function () {
-                  var currentScroll, i;
-                  // prevent queing up
-                  if ( list.is(':animated') ) return;
+            // scroll to the next item, unless we reached the last frame
+            this.list.scrollTo(
+              currentScroll < this.scrollDelta ? this.items.eq( i ) : 0 , 
+              opts.delay
+            );
+          },
+          
+          init : function () {
+            var self = this;
 
-                  i = 0;
-                  currentScroll = list.scrollLeft();
-                  
-                  // find next items position
-                  while ( i < len ) {
-                    i += 1;
-                    if ( currentScroll < positions[ i ] ) break;
+            this.positions = [];
+            this.childrenWidth = 0;
+            this.scrollDelta = 0;
+
+            // increase scrollWidth by adding padding-right
+            // that is the width of the list minus one last image
+            this.list.css(
+              'padding-right',
+              this.list.outerWidth() - this.images.last().width()
+            );
+
+            // save items' positions to compare scroll to them
+            for ( var i = 0; i < this.len; i += 1 ) {
+              this.positions.push( this.items.eq( i ).position().left );
+              this.childrenWidth += this.items[ i ].clientWidth;
+            }
+            // there is an IE <= 9 bug, scrollWidth on an element that has
+            // whitespace:nowrap is reported without padding
+            // so let's construct scrollWidth by ourselves
+            this.scrollDelta = this.childrenWidth + 
+                               parseInt( this.list.css('padding-left') ) +
+                               parseInt( this.list.css('padding-right') );
+            this.scrollDelta -= this.list.outerWidth();
+
+            // the user is expected to have the same padding on all the items
+            // TODO: document this
+            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-left') );
+            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-right') );
+
+            // don't do anything when container is wider than its children
+            if ( this.list.outerWidth() > this.childrenWidth ) return;
+
+            // Event handlers
+            this.container
+              .bind( 'click.scrollery', function () {
+                self.doScroll();
+              } );
+
+            if ( opts.keyboardControls ) {
+              doc
+                .bind( 'keydown.scrollery', function (e) {
+
+                  var code = e.keyCode || e.which;
+                  // 39 - right arrow
+                  if ( code === 39 ) {
+                    e.preventDefault();
+
+                    self.doScroll();
                   }
-                  
-                  // scroll to the next item, unless we reached the last frame
-                  list.scrollTo(
-                    currentScroll < scrollDelta ? items.eq( i ) : 0 , 
-                    opts.delay
-                  );
-                };
-              
-                // Event handlers
-                container
-                  .unbind( 'click.scrollery' )
-                  .bind( 'click.scrollery', doScroll );
-
-                if ( opts.keyboardControls ) {
-                  doc
-                    .unbind( 'keydown.scrollery' )
-                    .bind( 'keydown.scrollery', function (e) {
-                      var code = e.keyCode || e.which;
-                      // 39 - right arrow
-                      if ( code === 39 ) {
-                        e.preventDefault();
-
-                        doScroll();
-                      }
-                    });
-                }
-                
-                // recalculate scrollDelta on window resize
-                $(window).resize(function() {
-                  list.css('padding-right', 0);
-                  list.css(
-                    'padding-right',
-                    list.outerWidth() - images.last().width() 
-                  );
-                  scrollDelta = list[ 0 ].scrollWidth - list.outerWidth();
-                  scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
-                  scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
                 });
-            };
+            }
+
+            // recalculate scrollDelta on window resize
+            $(window).resize( function () {
+              // reset outer width in order to calculate 
+              // right padding based on new dimensions
+              self.list.css('padding-right', 0);
+              self.list.css(
+                'padding-right',
+                self.list.outerWidth() - self.images.last().width() 
+              );
+              self.scrollDelta = self.list[ 0 ].scrollWidth - self.list.outerWidth();
+              self.scrollDelta -= parseInt( self.items.eq( 0 ).css('padding-left') );
+              self.scrollDelta -= parseInt( self.items.eq( 0 ).css('padding-right') );
+            });          
+          }
+        };
+        
+        return this.each( function () {
+          new Scrollery( $(this) );
         });
     };
 } (jQuery) );
