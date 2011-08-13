@@ -4,7 +4,7 @@
  * @author Misha Reyzlin <http://mishareyzlin.com>
  * @license – WTFPL <http://sam.zoy.org/wtfpl/>
  *
- * @version 0.4
+ * @version 0.4.1
  *
  * @param {Object} settings hash – optional set of settings
  *   @option {Number} delay – in milliseconds, how long should scrolling animation take, default: 500
@@ -146,13 +146,13 @@
           // NOTE:
           // in Mozilla, adding `padding-right` to an element with `overflow:hidden`
           // and `white-space:nowrap;` doesn't really add to the elements width.
-          // therefore we will add padding to the last element.
+          // therefore we will add margin to the last element.
           setWidths : function() {
             var lastItem = this.items.last(), 
                 initialMargin = parseInt( this.items.eq( 0 ).css('margin-right') );
             
             // reset right padding for when resizing
-            lastItem.css('margin-right', initialPadding );
+            lastItem.css('margin-right', initialMargin );
             
             lastItem.css(
               'margin-right',
