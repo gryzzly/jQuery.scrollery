@@ -4,7 +4,7 @@
  * @author Misha Reyzlin <http://mishareyzlin.com>
  * @license – WTFPL <http://sam.zoy.org/wtfpl/>
  *
- * @version 0.3
+ * @version 0.4
  *
  * @param {Object} settings hash – optional set of settings
  *   @option {Number} delay – in milliseconds, how long should scrolling animation take, default: 500
@@ -50,6 +50,10 @@
  *  $('.gallery').scrollery();
  * });
  *
+ * Notes:
+ * # it's generally suggested for you to have the same 
+ *   dimensionals (margin / padding) styles for list items / images
+ *
  */
 ;(function ($) {
     $.fn.scrollery = function ( opts ) {
@@ -86,7 +90,8 @@
         Scrollery.prototype = {
           
           imageDone : function () {
-            if ( this.imagesCounter === this.len ) {
+            this.imagesCounter += 1;
+            if ( this.imagesCounter === this.images.length ) {
               this.init();
             }
           },
@@ -128,12 +133,46 @@
               i += 1;
               if ( currentScroll < this.positions[ i ] ) break;
             }
-
+            
             // scroll to the next item, unless we reached the last frame
             this.list.scrollTo(
-              currentScroll < this.scrollDelta ? this.items.eq( i ) : 0 , 
+              currentScroll < this.positions[ this.len - 1 ] ? this.positions[ i ] : 0 ,
               opts.delay
             );
+          },
+
+          // increase scrollWidth by adding padding-right
+          // that is the width of the list minus one last image
+          // NOTE:
+          // in Mozilla, adding `padding-right` to an element with `overflow:hidden`
+          // and `white-space:nowrap;` doesn't really add to the elements width.
+          // therefore we will add padding to the last element.
+          setWidths : function() {
+            var lastItem = this.items.last(), 
+                initialMargin = parseInt( this.items.eq( 0 ).css('margin-right') );
+            
+            // reset right padding for when resizing
+            lastItem.css('margin-right', initialPadding );
+            
+            lastItem.css(
+              'margin-right',
+              this.list.outerWidth() - 
+              this.images.last().width() -
+              parseInt( lastItem.css('margin-right') )
+            );
+            
+            // there is an IE <= 9 bug, scrollWidth on an element that has
+            // whitespace:nowrap is reported without padding
+            // so let's construct scrollWidth by ourselves
+            this.scrollDelta = this.childrenWidth + 
+                               parseInt( this.list.css('padding-left') ) +
+                               parseInt( this.list.css('padding-right') );
+            this.scrollDelta -= this.list.outerWidth();
+            
+            // the user is expected to have the same padding on all the items
+            // TODO: document this
+            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-left') );
+            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-right') );
           },
           
           init : function () {
@@ -142,31 +181,18 @@
             this.positions = [];
             this.childrenWidth = 0;
             this.scrollDelta = 0;
-
-            // increase scrollWidth by adding padding-right
-            // that is the width of the list minus one last image
-            this.list.css(
-              'padding-right',
-              this.list.outerWidth() - this.images.last().width()
-            );
-
+            
             // save items' positions to compare scroll to them
             for ( var i = 0; i < this.len; i += 1 ) {
-              this.positions.push( this.items.eq( i ).position().left );
+              this.positions.push( 
+                // for some reason FF reports non-integer values ( such as 419.9991232 )
+                Math.ceil( parseFloat( this.items.eq( i ).position().left ) ) 
+              );
               this.childrenWidth += this.items[ i ].clientWidth;
             }
-            // there is an IE <= 9 bug, scrollWidth on an element that has
-            // whitespace:nowrap is reported without padding
-            // so let's construct scrollWidth by ourselves
-            this.scrollDelta = this.childrenWidth + 
-                               parseInt( this.list.css('padding-left') ) +
-                               parseInt( this.list.css('padding-right') );
-            this.scrollDelta -= this.list.outerWidth();
-
-            // the user is expected to have the same padding on all the items
-            // TODO: document this
-            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-left') );
-            this.scrollDelta -= parseInt( this.items.eq( 0 ).css('padding-right') );
+            
+            // this needs childrenWidth to be already calculated
+            this.setWidths();
 
             // don't do anything when container is wider than its children
             if ( this.list.outerWidth() > this.childrenWidth ) return;
@@ -191,18 +217,9 @@
                 });
             }
 
-            // recalculate scrollDelta on window resize
+            // recalculate scrollDelta and right padding on window resize
             $(window).resize( function () {
-              // reset outer width in order to calculate 
-              // right padding based on new dimensions
-              self.list.css('padding-right', 0);
-              self.list.css(
-                'padding-right',
-                self.list.outerWidth() - self.images.last().width() 
-              );
-              self.scrollDelta = self.list[ 0 ].scrollWidth - self.list.outerWidth();
-              self.scrollDelta -= parseInt( self.items.eq( 0 ).css('padding-left') );
-              self.scrollDelta -= parseInt( self.items.eq( 0 ).css('padding-right') );
+              self.setWidths();
             });          
           }
         };

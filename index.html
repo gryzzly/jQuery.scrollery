@@ -9,9 +9,16 @@
         padding:0;
     }
     body {
+      line-height:1;
       width:90%;
       margin:30px auto;
       font-family:helvetica, sans-serif;
+    }
+    h1 {
+      margin:0 0 .5em;
+    }
+    p {
+      line-height:1.5;
     }
     .scrollery {
       border:2px solid #444;
@@ -27,10 +34,45 @@
     <link href="jquery.scrollery.css" rel="stylesheet">
 </head>
 <body>
-    <h1>jQuery scrollery</h1>
-    <p>Simple and light-weight plugin that allows to create a gallery from a list of images, wrapped in a scrollable container.</p>
+    <h1>jQuery scrollery – scrolling gallery</h1>
+    <p>Simple and light-weight plugin that allows to create a film-like gallery from a list of images, wrapped in a scrollable container.</p>
     <p>Click on the container in order to continue to the next image. When the last image is reached, gallery scrolls to the first item.</p>
-    <div class="scrollery">
+    <p>The main benefit of using this gallery is that it's width-independent. What it means is that the container can have flexible width.</p>
+    <div class="scrollery example1">
+      <ul>
+        <li>
+            <img src="http://lorempixum.com/400/200/abstract/1/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/abstract/2/">
+        </li> 
+        <li>
+            <img src="http://lorempixum.com/300/200/abstract/3/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/350/250/abstract/4/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/200/abstract/5/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/abstract/6/">
+        </li>
+        <li>
+            <h1 style="font-size:20px">Whoa!</h1>
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/200/abstract/7/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/250/abstract/8/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/250/abstract/9/">
+        </li>
+      </ul>
+    </div>
+    <div class="scrollery example1 enabled">
       <ul>
         <li>
             <img src="http://lorempixum.com/400/200/abstract/1/">
@@ -61,7 +103,38 @@
         </li>
       </ul>
     </div>
-        <div class="scrollery">
+    <div class="scrollery example2">
+      <ul>
+        <li>
+            <img src="http://lorempixum.com/400/200/nature/1/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/nature/2/">
+        </li> 
+        <li>
+            <img src="http://lorempixum.com/300/200/nature/3/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/350/250/nature/4/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/200/nature/5/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/200/150/nature/6/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/200/nature/7/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/300/250/nature/8/">
+        </li>
+        <li>
+            <img src="http://lorempixum.com/400/250/nature/3/">
+        </li>
+      </ul>
+    </div>
+    <div class="scrollery example2">
       <ul>
         <li>
             <img src="http://lorempixum.com/400/200/nature/1/">
