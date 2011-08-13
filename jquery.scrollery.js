@@ -64,13 +64,13 @@
 
         return this.each( function () {
             var container = $(this),
-                list = $(this).children('ul'),
+                list = container.children('ul'),
                 items = list.children(),
                 len = items.length,
                 images = list.find('img'),
                 imageDone,
-                imagesCounter = 0;
-            
+                imagesCounter = 0, init;
+                
             // ---=== Images are loading ===---
             
             // change container's overflow to hidden
@@ -85,7 +85,7 @@
             imageDone = function() {
               imagesCounter += 1;
               if ( imagesCounter === len ) {
-                doc.trigger('images-loaded.scrollery'); 
+                init(); 
               }
             };
             
@@ -106,32 +106,38 @@
             });
             // ---=== Images loaded ===---
             
-            doc
-              .unbind('images-loaded.scrollery')
-              .bind('images-loaded.scrollery', function () {
+            init = function () {
                 var positions = [], 
                     childrenWidth = 0,
                     i = 0,
                     scrollDelta,
                     doScroll;
-                
+
+                // increase scrollWidth by adding padding-right
+                // that is the width of the list minus one last image
                 list.css(
                   'padding-right',
                   list.outerWidth() - images.last().width() 
                 );
-                
-                scrollDelta = list[ 0 ].scrollWidth - list.outerWidth();
-                scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
-                scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
 
                 // save items' positions to compare scroll to them
                 for ( i = 0; i < len; i += 1 ) {
                   positions.push( items.eq( i ).position().left );
-                  childrenWidth += items.eq( i ).width();
+                  childrenWidth += items[ i ].clientWidth;
                 }
-              
+                // there is an IE <= 9 bug, scrollWidth on an element that has
+                // whitespace:nowrap is reported without padding
+                // so let's construct scrollWidth by ourselves
+                scrollDelta = childrenWidth + list.css('padding-left') +
+                                              list.css('padding-right');
+                scrollDelta -= list.outerWidth();
+                // the user is expected to have the same padding on all the items
+                // TODO: document this
+                scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
+                scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
+
                 // don't do anything when container is wider than its children
-                if ( container.width() >  childrenWidth ) return;
+                if ( list.outerWidth() > childrenWidth ) return;
               
                 doScroll = function () {
                   var currentScroll, i;
@@ -140,14 +146,14 @@
 
                   i = 0;
                   currentScroll = list.scrollLeft();
-
+                  
                   // find next items position
                   while ( i < len ) {
                     i += 1;
                     if ( currentScroll < positions[ i ] ) break;
                   }
                   
-                  // scroll to the next item, unless we can't scroll anymore
+                  // scroll to the next item, unless we reached the last frame
                   list.scrollTo(
                     currentScroll < scrollDelta ? items.eq( i ) : 0 , 
                     opts.delay
@@ -184,7 +190,7 @@
                   scrollDelta -= parseInt( items.eq( 0 ).css('padding-left') );
                   scrollDelta -= parseInt( items.eq( 0 ).css('padding-right') );
                 });
-            });
+            };
         });
     };
 } (jQuery) );
