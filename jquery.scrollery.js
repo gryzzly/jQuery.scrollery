@@ -4,7 +4,7 @@
  * @author Misha Reyzlin <http://mishareyzlin.com>
  * @license – WTFPL <http://sam.zoy.org/wtfpl/>
  *
- * @version 0.4.1
+ * @version 0.4.2
  *
  * @param {Object} settings hash – optional set of settings
  *   @option {Number} delay – in milliseconds, how long should scrolling animation take, default: 500
@@ -52,14 +52,14 @@
  *
  * Notes:
  * # it's generally suggested for you to have the same 
- *   dimensionals (margin / padding) styles for list items / images
+ *   dimensional (margin / padding) styles for list items / images
  *
  */
 ;(function ($) {
     $.fn.scrollery = function ( opts ) {
 
         var doc = $(document);
-
+        
         opts = $.extend({
           delay : 500,
           hideScrollBar : true,
@@ -101,7 +101,12 @@
 
             this.images.each( function () {
               // image is already loaded
-              if ( this.complete ) {
+              // FIXME: relying on clientHeight > 0 is rather risky
+              // TODO: test this properly
+              // however, `this.complete` is not true in IE even though
+              // image is already in cache
+              // and `load` doesn't fire for cached images.
+              if ( this.complete || this.clientHeight > 0 ) {
                 // Webkit and Mozilla report true even for broken images
                 // although they shouldn't
                 // spec: http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content-1.html#dom-img-complete
@@ -110,11 +115,11 @@
               // image is loaded, but is broken
               // these ones aren't yet loaded, so we can't attach event listeners to them
               else {
-                this.onload = function () {
-                  self.imageDone();
-                };
-                this.onerror = function () {
-                  self.imageDone();
+                this.onload = function() {
+                    self.imageDone();
+                }
+                this.onerror = function() {
+                    self.imageDone()
                 }
               }
             });
@@ -182,6 +187,10 @@
             this.childrenWidth = 0;
             this.scrollDelta = 0;
             
+            // scroll element to the x : 0, before calculating positions
+            // so there aren't any negative positions
+            this.list.scrollLeft( 0 );
+            
             // save items' positions to compare scroll to them
             for ( var i = 0; i < this.len; i += 1 ) {
               this.positions.push( 
@@ -190,7 +199,7 @@
               );
               this.childrenWidth += this.items[ i ].clientWidth;
             }
-            
+
             // this needs childrenWidth to be already calculated
             this.setWidths();
 
